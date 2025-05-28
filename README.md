@@ -139,3 +139,17 @@ GitHub 레포지토리 설정에서 중요한 정보를 레포지토리 환경�
 - 브라우저 캐시 외에도 CDN 캐시를 `max-age`로 제어할 수 있다.
 
 따라서 _next/static 하위에 빌드된 정적 자산들은 변경될 가능성이 적다고 판단하여 `max-age=31536000, immutable`로 Cache-Control을 설정했고 index.html은 항상 변경된 최신 페이지를 렌더해야하기 때문에 `max-age=0, must-revalidate로` Cache-Control을 설정하였다.
+
+### cdn 적용 전 s3로 배포한 결과 (cache control 세팅 안했을 때)
+![image](https://github.com/user-attachments/assets/69a387ef-d6ae-4cce-8187-14a19fde7ebb)
+
+
+### cdn 적용 후(cache control 설정 안했을 때)
+![image](https://github.com/user-attachments/assets/79cba6dd-d3ff-4264-9828-c480f7ec6094)
+
+### cache control 적용하여 s3 배포(s3에 cache control 적용시 cdn에도 적용)
+![image](https://github.com/user-attachments/assets/5f41d040-cdc5-48a0-a081-94b93e5f2248)
+![image](https://github.com/user-attachments/assets/e0466a24-0a4f-4eb7-beba-476ddb170b7c)
+
+
+
