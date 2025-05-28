@@ -3,7 +3,7 @@ name: Deploy Next.js to S3 and invalidate CloudFront
 on:
   push:
     branches:
-      - main # 또는 master, 프로젝트의 기본 브랜치 이름에 맞게 조정
+      - main
   workflow_dispatch:
 
 jobs:
@@ -32,10 +32,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to S3
+      # ✅ 캐싱 가능한 정적 자산 (Next.js 빌드된 JS, CSS 등)
+      - name: Upload static assets with long cache
         run: |
-          aws s3 sync out/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+          aws s3 sync out/_next/ s3://${{ secrets.S3_BUCKET_NAME }}/_next/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --delete
 
+      # ✅ HTML 및 기타 파일 (항상 최신화가 필요)
+      - name: Upload HTML and other assets with no cache
+        run: |
+          aws s3 sync out/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+            --exclude "_next/*" \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --delete
+
+      # ✅ CloudFront 캐시 무효화
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
