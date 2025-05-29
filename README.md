@@ -139,10 +139,10 @@ GitHub 레포지토리 설정에서 중요한 정보를 레포지토리 환경�
 <img width="907" alt="image" src="https://github.com/user-attachments/assets/0789de9e-5e8d-4fac-8fea-937c45fa4a95" />
 
 
+### 캐싱 전략 
 - **CloudFront 사용 중이라면** S3에서 설정한 `Cache-Control`이 그대로 전달된다.
 - 브라우저 캐시 외에도 CDN 캐시를 `max-age`로 제어할 수 있다.
-
-따라서 _next/static 하위에 빌드된 정적 자산들은 변경될 가능성이 적다고 판단하여 `max-age=31536000, immutable`로 Cache-Control을 설정했고 index.html은 항상 변경된 최신 페이지를 렌더해야하기 때문에 `max-age=0, must-revalidate로` Cache-Control을 설정하였다.
+- 따라서 _next/static 하위에 빌드된 정적 자산들은 변경될 가능성이 적다고 판단하여 `max-age=31536000, immutable`로 Cache-Control을 설정했고 index.html은 항상 변경된 최신 페이지를 렌더해야하기 때문에 `max-age=0, must-revalidate로` Cache-Control을 설정하였다.
 
 ### cdn 적용 전 s3로 배포한 결과 (cache control 세팅 안했을 때)
 ![image](https://github.com/user-attachments/assets/69a387ef-d6ae-4cce-8187-14a19fde7ebb)
