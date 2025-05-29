@@ -135,6 +135,10 @@ GitHub 레포지토리 설정에서 중요한 정보를 레포지토리 환경�
 
 ## CDN과 성능최적화
 
+### 배포 파이프라인
+<img width="907" alt="image" src="https://github.com/user-attachments/assets/0789de9e-5e8d-4fac-8fea-937c45fa4a95" />
+
+
 - **CloudFront 사용 중이라면** S3에서 설정한 `Cache-Control`이 그대로 전달된다.
 - 브라우저 캐시 외에도 CDN 캐시를 `max-age`로 제어할 수 있다.
 
@@ -146,10 +150,33 @@ GitHub 레포지토리 설정에서 중요한 정보를 레포지토리 환경�
 
 ### cdn 적용 후(cache control 설정 안했을 때)
 ![image](https://github.com/user-attachments/assets/79cba6dd-d3ff-4264-9828-c480f7ec6094)
+- s3만을 사용해서 배포를 했을 때에는 document 파일의 size는 12.5kB, 응답에 걸린 시간은 45ms였다. cdn을 적용한 결과 document의 size는 3.2kB, 응답에 걸린 시간은 32ms로 감소했다.
+    - cdn을 사용했을 때 document의 크기는 약 74.7%, 응답 시간은 28.9% 감소했다.
+    - 물리적으로 엔드유저와 거리가 가까워지는 것 뿐만 아니라, CloudFront 자체가 HTML 파일을 압축해서 전송하기 때문이다.
+
+
 
 ### cache control 적용하여 s3 배포(s3에 cache control 적용시 cdn에도 적용)
 ![image](https://github.com/user-attachments/assets/5f41d040-cdc5-48a0-a081-94b93e5f2248)
-![image](https://github.com/user-attachments/assets/e0466a24-0a4f-4eb7-beba-476ddb170b7c)
+![image](https://github.com/user-attachments/assets/747bec05-41c1-4fb5-bdfe-c3087301015f)
+- cdn만 적용하는 것 보다 Cache-Control를 적용하면 응답 속도가 매우 큰 폭으로 감소하는 것을 확인할 수 있다.
+- size에 disk cache로 표기된 리소스는 응답 시간에 걸린 시간이 5ms 이하로 매우 빠른 속도로 리소스를 가져오는 것을 확인할 수 있다. 
+- 이는 Cache-Control 헤더를 설정하면 브라우저가 해당 리소스를 로컬 HTTP 캐시에 저장하고, 유효 기간(또는 기타 정책) 안에서는 서버에 재요청 없이 바로 로드하도록 지시하기 때문이다.
+- _next/하위의 정적 리소스들은 Cache-Control 헤더를 `public, max-age=31536000, immutable` 로 설정했기 때문에
+    - public 브라우저뿐만 아니라 프록시 서버와 같은 중간 캐시에서도 해당 리소스를 저장할 수 있음. 
+    - max-age=31536000 캐싱된 리소스가 1년 동안 유효함을 뜻함.
+    - immutable 해당 리소스가 변경되지 않는 리소스라는 것을 브라우저에게 알려줌. 
+- 다만 index.html 같은 경우 배포 이후 변경된 index.html이 새로 렌더되어야 하기 때문에 `max-age=0, must-revalidate`로 Cache-Control 헤더를 설정해주었다.
+    - must-revalidate: 만료 후 반드시 서버에 재검증을 요구.
+- 위에서도 다뤘지만, 한번 브라우저에 캐시가 저장되면 만료될 때까지 캐시는 계속 브라우저에 남아있다. 따라서 CDN Invalidation 작업을 진행하더라도 브라우저에 유효한 캐시를 지우기는 어렵다. 따라서 프로젝트에 알맞는 캐싱 전략을 세우고 적용하는 것이 중요하다.
 
+<br/>
+
+
+
+---
+### 질문
+- 리소스 별로 캐시 전략을 다르게 가져가야할 것 같은데 어떤 식으로 캐싱 전략을 세우고 적용하고 계신가요? (캐싱 전략을 잘못 세우고 적용하게 될 경우 엔드 유저에게 정확하지 못한 정보를 전달할 수도 있어 캐싱 전략을 어떻게 가져가야할지 고민입니다. )
+- Next.js나 서버의 배포가 필요한 경우 리소스 산정을 어떻게 하고 배포하고 계신가요? (ex. 인스턴스 or pod을 몇대 띄울지, 이중화나 DR 측면에서는 어떻게 설계할지.)
 
 
